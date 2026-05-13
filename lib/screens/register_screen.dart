@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/auth_service.dart';
+import 'package:zirai_ilac_takip/core/auth_service.dart'; 
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,6 +17,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
   Future<void> _kayitOl() async {
+    FocusScope.of(context).unfocus(); 
+
     if (_emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _adSoyadController.text.isEmpty ||
