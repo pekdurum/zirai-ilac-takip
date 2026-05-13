@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:zirai_ilac_takip/screens/login_screen.dart';
 
 void main() async {
-  // Flutter widget bağlamalarını başlatır (Gerekli)
   WidgetsFlutterBinding.ensureInitialized();
   
-  // .env dosyasını yükle
   await dotenv.load(fileName: ".env");
   
-  // Supabase'i ayağa kaldır
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
@@ -24,20 +22,13 @@ class ZiraiIlacApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Sağ üstteki debug yazısını kaldırır
+      debugShowCheckedModeBanner: false, 
       title: 'Zirai İlaç Takip',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            'Supabase Bağlantısı Başarılı, Patron!',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
+      home: const LoginScreen(),
     );
   }
 }
