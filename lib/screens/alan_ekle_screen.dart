@@ -9,134 +9,115 @@ class AlanEkleScreen extends StatefulWidget {
 }
 
 class _AlanEkleScreenState extends State<AlanEkleScreen> {
-  final _supabase = Supabase.instance.client;
   final _formKey = GlobalKey<FormState>();
+  final _supabase = Supabase.instance.client;
 
-  final _alanAdiController = TextEditingController();
-  final _sehirController = TextEditingController();
-  final _buyuklukController = TextEditingController();
+  // Form girdilerini kontrol etmek için Controller yapıları
+  final TextEditingController _adiController = TextEditingController();
+  final TextEditingController _turuController = TextEditingController();
+  final TextEditingController _buyuklukController = TextEditingController();
+  final TextEditingController _konumController = TextEditingController();
   
-  String _secilenAlanTuru = 'Tarla';
   bool _isLoading = false;
 
-  Future<void> _alanKaydet() async {
+  // Supabase 'alanlar' tablosuna yeni veri ekleme metodu (Insert Operation)
+  Future<void> _alanikaydet() async {
+    // Form Validation (Form Doğrulama): Boş alan kalmasını engeller
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
       await _supabase.from('alanlar').insert({
-        'alan_adi': _alanAdiController.text.trim(),
-        'alan_turu': _secilenAlanTuru,
-        'sehir': _sehirController.text.trim(),
-        'buyukluk_dekar': double.parse(_buyuklukController.text.trim()),
+        'alan_adi': _adiController.text.trim(),
+        'alan_turu': _turuController.text.trim(),
+        // Supabase'deki 'numeric' tip için String'i double'a çeviriyoruz:
+        'buyukluk_dekar': double.parse(_buyuklukController.text),
+        'sehir': _konumController.text.trim(),
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Alan başarıyla eklendi!'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Yeni alan başarıyla eklendi!')),
         );
-        Navigator.pop(context, true); // true: "Veri eklendi, listeyi yenile" demek
+        Navigator.pop(context); // Alan eklenince ana ekrana geri dön (Pop)
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Alan eklenirken hata çıktı: $e')),
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    // Bellek sızıntısını (Memory Leak) önlemek için controller'ları kapatıyoruz
+    _adiController.dispose();
+    _turuController.dispose();
+    _buyuklukController.dispose();
+    _konumController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Yeni Alan Ekle'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _alanAdiController,
-                decoration: const InputDecoration(
-                  labelText: 'Alan Adı (Örn: Kuzey Tarlası)',
-                  border: OutlineInputBorder(),
+      appBar: AppBar(title: const Text('Yeni Tarla/Sera Ekle')),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _adiController,
+                      decoration: const InputDecoration(labelText: 'Alan Adı (Örn: Kuzey Tarlası)'),
+                      validator: (val) => val == null || val.isEmpty ? 'Alan adı boş bırakılamaz' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(labelText: 'Alan Türü'),
+                      items: const [
+                        DropdownMenuItem(value: 'Tarla', child: Text('Tarla')),
+                        DropdownMenuItem(value: 'Sera', child: Text('Sera')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) _turuController.text = val;
+                      },
+                      validator: (val) => val == null || val.isEmpty ? 'Lütfen bir tür seçin' : null,
+                    ),
+                    TextFormField(
+                      controller: _buyuklukController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Büyüklük (Dekar)'),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Büyüklük boş bırakılamaz';
+                        if (double.tryParse(val) == null) return 'Geçerli bir sayı girin';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _konumController,
+                      decoration: const InputDecoration(labelText: 'Konum (Şehir/İlçe)'),
+                      validator: (val) => val == null || val.isEmpty ? 'Konum boş bırakılamaz' : null,
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: _alanikaydet,
+                      style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                      child: const Text('Alanı Kaydet'),
+                    ),
+                  ],
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Boş bırakılamaz' : null,
               ),
-              const SizedBox(height: 16),
-              
-              DropdownButtonFormField<String>(
-                initialValue: _secilenAlanTuru,
-                decoration: const InputDecoration(
-                  labelText: 'Alan Türü',
-                  border: OutlineInputBorder(),
-                ),
-                items: ['Tarla', 'Sera'].map((tur) {
-                  return DropdownMenuItem(value: tur, child: Text(tur));
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _secilenAlanTuru = val);
-                },
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _sehirController,
-                decoration: const InputDecoration(
-                  labelText: 'Şehir (Örn: Konya)',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => val == null || val.isEmpty ? 'Boş bırakılamaz' : null,
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _buyuklukController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Büyüklük (Dekar)',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) {
-                  if (val == null || val.isEmpty) return 'Boş bırakılamaz';
-                  if (double.tryParse(val) == null) return 'Geçerli bir sayı girin';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-              ElevatedButton(
-                onPressed: _isLoading ? null : _alanKaydet,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: _isLoading 
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('KAYDET', style: TextStyle(fontSize: 16)),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
-  }
-
-  @override
-  void dispose() {
-    _alanAdiController.dispose();
-    _sehirController.dispose();
-    _buyuklukController.dispose();
-    super.dispose();
   }
 }

@@ -68,7 +68,7 @@ class _IlaclamaFormScreenState extends State<IlaclamaFormScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İlaçlama kaydı başarıyla eklendi, reis!')),
+          const SnackBar(content: Text('İlaçlama kaydı başarıyla eklendi!')),
         );
         Navigator.pop(context); 
       }
