@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:zirai_ilac_takip/screens/alan_detay_screen.dart';
+// ignore: unused_import
 import 'package:zirai_ilac_takip/screens/alan_ekle_screen.dart';
 import '../core/auth_service.dart';
 import 'login_screen.dart';
+// ignore: unused_import
+import 'ilacalama_form_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -143,10 +147,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 subtitle: Text('${alan['sehir']} - ${alan['buyukluk_dekar']} Dekar'),
                                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('${alan['alan_adi']} detaylarına gidilecek...')),
-                                  );
-                                },
+                                 Navigator.push(
+                                                  context,
+                                                          MaterialPageRoute(
+                                                          builder: (context) => AlanDetayScreen(alan: alan),
+                                        ),
+                                       );
+                               },
+                                
                               ),
                             );
                           },
@@ -154,22 +162,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-      floatingActionButton: _kullaniciRolu == 'admin'
-          ? FloatingActionButton(
-              onPressed: () async {
-                final sonuc = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AlanEkleScreen()),
-                );
-                // Eğer alan eklendiyse sayfayı yenile ki listede görünsün
-                if (sonuc == true) {
-                  _verileriGetir();
-                }
-              },
-              backgroundColor: Colors.green,
-              child: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: _kullaniciRolu == 'admin' // Sendeki yetki kontrolü değişkeni neyse o kalsın
+    ? FloatingActionButton(
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add),
+        onPressed: () {
+          // Butona basıldığında yeni form ekranına geçiş (Route) yapıyoruz:
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const IlaclamaFormScreen(),
+            ),
+          );
+        },
+      )
+    : null,
     );
   }
 }
